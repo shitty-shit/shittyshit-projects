@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Project Manager - SHITTYSHIT</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 20px; background: #f8f9fa; }
+    h1 { margin-bottom: 20px; color: #333; font-size: 28px; }
+    .controls { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .filter-input { padding: 10px; margin-right: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+    button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #0056b3; }
+    .stats { margin-bottom: 20px; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .status-badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .active { background: #d4edda; color: #155724; }
+    .parked { background: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; }
+    .mudroom { background: #fff3cd; color: #856404; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #e9ecef; }
+    th { background: #f8f9fa; font-weight: 600; color: #495057; }
+    tr:hover { background: #f8f9fa; }
+    .priority-1 { color: #dc3545; font-weight: bold; }
+    .priority-2 { color: #fd7e14; }
+    .priority-3 { color: #ffc107; }
+    .priority-4 { color: #28a745; }
+    .priority-5 { color: #6c757d; }
+    .revenue-yes::before { content: "💰 "; }
+    a { color: #007bff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .project-name { font-weight: 600; color: #212529; }
+    .codename { font-size: 12px; color: #6c757d; display: block; margin-top: 2px; }
+    .tags { font-size: 12px; color: #6c757d; }
+    .next-action { font-size: 13px; color: #495057; }
+    .info-panel { margin-top: 30px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .info-panel h3 { margin-bottom: 10px; color: #333; }
+    .info-panel code { background: #f8f9fa; padding: 2px 6px; border-radius: 3px; font-family: monospace; }
+    .empty-state { text-align: center; padding: 40px; color: #6c757d; }
+  </style>
+</head>
+<body>
+  <h1>🏗️ SHITTYSHIT Project Manager</h1>
+  
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search projects..." class="filter-input" style="width: 200px;">
+    <select id="statusFilter" class="filter-input">
+      <option value="">All Status</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="PARKED">PARKED</option>
+      <option value="MUDROOM">MUDROOM</option>
+    </select>
+    <select id="tagFilter" class="filter-input">
+      <option value="">All Tags</option>
+      <option value="#revenue">💰 #revenue</option>
+      <option value="#infra">🔧 #infra</option>
+      <option value="#content">📝 #content</option>
+      <option value="#creative">🎨 #creative</option>
+      <option value="#ai">🤖 #ai</option>
+      <option value="#photo">📷 #photo</option>
+      <option value="#code">💻 #code</option>
+    </select>
+    <select id="priorityFilter" class="filter-input">
+      <option value="">All Priorities</option>
+      <option value="1">Priority 1 (Highest)</option>
+      <option value="2">Priority 2</option>
+      <option value="3">Priority 3</option>
+      <option value="4">Priority 4</option>
+      <option value="5">Priority 5 (Lowest)</option>
+    </select>
+    <button onclick="refresh()">🔄 Refresh</button>
+    <button onclick="showNewProjectForm()" style="background: #28a745;">➕ New Project</button>
+  </div>
+  
+  <div class="stats" id="stats">
+    Loading projects...
+  </div>
+  
+  <table id="projectsTable">
+    <thead>
+      <tr>
+        <th width="25%">Project</th>
+        <th width="10%">Status</th>
+        <th width="5%">Pri</th>
+        <th width="15%">Tags</th>
+        <th width="15%">Type</th>
+        <th width="10%">Rev</th>
+        <th width="20%">Next Action</th>
+      </tr>
+    </thead>
+    <tbody id="projectsBody">
+      <tr><td colspan="7" class="empty-state">Loading projects...</td></tr>
+    </tbody>
+  </table>
+  
+  <div class="info-panel">
+    <h3>📋 Quick Actions</h3>
+    <p><strong>View Project Files:</strong> Double-click any project row to view folder contents</p>
+    <p><strong>Edit in Obsidian:</strong> Open <code>PROJECTS_SPREADSHEET.md</code> to edit project details</p>
+    <p><strong>Add New Project:</strong> Click "New Project" button or add to <code>PROJECTS_SPREADSHEET.md</code></p>
+    <p><strong>Phase 2 (Coming Soon):</strong> File editing, drag-drop, Cline Kanban integration</p>
+  </div>
+
+  <!-- New Project Modal -->
+  <div id="newProjectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; width: 500px; max-width: 90%;">
+      <h2 style="margin-bottom: 20px;">➕ New Project</h2>
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Project Name</label>
+        <input type="text" id="newProjectName" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Description</label>
+        <textarea id="newProjectDesc" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; height: 80px;"></textarea>
+      </div>
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Status</label>
+        <select id="newProjectStatus" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="PARKED">PARKED</option>
+          <option value="MUDROOM">MUDROOM</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tags</label>
+        <div id="tagSelection" style="display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px;">
+          <button type="button" class="tag-option" data-tag="#revenue" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">💰 #revenue</button>
+          <button type="button" class="tag-option" data-tag="#infra" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">🔧 #infra</button>
+          <button type="button" class="tag-option" data-tag="#content" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">📝 #content</button>
+          <button type="button" class="tag-option" data-tag="#creative" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">🎨 #creative</button>
+          <button type="button" class="tag-option" data-tag="#ai" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">🤖 #ai</button>
+          <button type="button" class="tag-option" data-tag="#photo" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">📷 #photo</button>
+          <button type="button" class="tag-option" data-tag="#code" style="padding: 5px 10px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">💻 #code</button>
+        </div>
+        <input type="text" id="newProjectTags" placeholder="Selected tags will appear here" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" readonly>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button onclick="hideNewProjectForm()" style="background: #6c757d;">Cancel</button>
+        <button onclick="createNewProject()" style="background: #28a745;">Create Project</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allProjects = [];
+    let selectedTags = [];
+    
+    async function loadProjects() {
+      try {
+        // Try to load from local file
+        const response = await fetch('PROJECTS_SPREADSHEET.md');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const text = await response.text();
+        
+        // Parse the Markdown table
+        const lines = text.split('\n');
+        const tableStart = lines.findIndex(l => l.trim().startsWith('|------'));
+        if (tableStart === -1) throw new Error('No table found in PROJECTS_SPREADSHEET.md');
+        
+        const projects = [];
+        for (let i = tableStart + 2; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line.startsWith('|') || line.includes('---')) continue;
+          if (line.includes('How to Add/Update')) break;
+          
+          const cells = line.split('|').map(c => c.trim()).filter(c => c);
+          if (cells.length >= 9) {
+            projects.push({
+              name: cells[0],
+              codename: cells[1],
+              status: cells[2],
+              type: cells[3],
+              revenue: cells[4],
+              priority: parseInt(cells[5]) || 3,
+              tags: cells[6],
+              lastUpdated: cells[7],
+              nextAction: cells[8],
+              rawLine: line // Keep original for potential editing
+            });
+          }
+        }
+        
+        allProjects = projects;
+        renderProjects(projects);
+        updateStats(projects);
+      } catch (error) {
+        console.error('Error loading projects:', error);
+        document.getElementById('projectsBody').innerHTML = `
+          <tr><td colspan="7" style="color: #dc3545; text-align: center; padding: 30px;">
+            <strong>Error loading projects</strong><br>
+            ${error.message}<br><br>
+            Make sure <code>PROJECTS_SPREADSHEET.md</code> exists in the same folder.
+          </td></tr>
+        `;
+      }
+    }
+    
+    function renderProjects(projects) {
+      const tbody = document.getElementById('projectsBody');
+      if (projects.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No projects found matching filters</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = projects.map(p => `
+        <tr onclick="viewProject('${p.codename}')" style="cursor: pointer;" title="Double-click to view project files">
+          <td>
+            <div class="project-name">${p.name}</div>
+            <div class="codename">${p.codename}</div>
+          </td>
+          <td><span class="status-badge ${p.status.toLowerCase()}">${p.status}</span></td>
+          <td class="priority-${p.priority}">${'★'.repeat(p.priority)}${'☆'.repeat(5-p.priority)}</td>
+          <td><div class="tags">${p.tags}</div></td>
+          <td>${p.type}</td>
+          <td class="${p.revenue === 'YES' ? 'revenue-yes' : ''}">${p.revenue}</td>
+          <td><div class="next-action">${p.nextAction}</div></td>
+        </tr>
+      `).join('');
+      
+      // Add double-click handler
+      const rows = tbody.getElementsByTagName('tr');
+      for (let row of rows) {
+        row.ondblclick = function(e) {
+          const projectName = this.cells[0].querySelector('.codename').textContent;
+          viewProject(projectName);
+        };
+      }
+    }
+    
+    function updateStats(projects) {
+      const active = projects.filter(p => p.status === 'ACTIVE').length;
+      const parked = projects.filter(p => p.status === 'PARKED').length;
+      const mudroom = projects.filter(p => p.status === 'MUDROOM').length;
+      const revenue = projects.filter(p => p.revenue === 'YES').length;
+      const priority1 = projects.filter(p => p.priority === 1).length;
+      
+      document.getElementById('stats').innerHTML = `
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+          <div><strong>📊 ${projects.length}</strong> total projects</div>
+          <div><span class="status-badge active">${active} ACTIVE</span></div>
+          <div><span class="status-badge parked">${parked} PARKED</span></div>
+          <div><span class="status-badge mudroom">${mudroom} MUDROOM</span></div>
+          <div>💰 ${revenue} revenue projects</div>
+          <div>🚨 ${priority1} priority 1 projects</div>
+        </div>
+      `;
+    }
+    
+    function refresh() {
+      loadProjects();
+      showToast('Projects refreshed');
+    }
+    
+    function viewProject(codename) {
+      // For now, just show an alert with folder location
+      // Phase 2 will load actual file listing
+      showToast(`Viewing project: ${codename}\n\nFolder: _ACTIVE/${codename}\n\nPhase 2 will show file browser.`);
+    }
+    
+    function showNewProjectForm() {
+      document.getElementById('newProjectModal').style.display = 'block';
+      document.getElementById('newProjectName').focus();
+      
+      // Set up tag selection
+      selectedTags = [];
+      updateTagInput();
+      
+      const tagButtons = document.querySelectorAll('.tag-option');
+      tagButtons.forEach(btn => {
+        btn.onclick = function() {
+          const tag = this.getAttribute('data-tag');
+          if (selectedTags.includes(tag)) {
+            selectedTags = selectedTags.filter(t => t !== tag);
+            this.style.background = '#f8f9fa';
+          } else {
+            selectedTags.push(tag);
+            this.style.background = '#007bff';
+            this.style.color = 'white';
+          }
+          updateTagInput();
+        };
+      });
+    }
+    
+    function hideNewProjectForm() {
+      document.getElementById('newProjectModal').style.display = 'none';
+      // Reset form
+      document.getElementById('newProjectName').value = '';
+      document.getElementById('newProjectDesc').value = '';
+      document.getElementById('newProjectStatus').value = 'ACTIVE';
+      selectedTags = [];
+      updateTagInput();
+      
+      // Reset tag buttons
+      document.querySelectorAll('.tag-option').forEach(btn => {
+        btn.style.background = '#f8f9fa';
+        btn.style.color = 'inherit';
+      });
+    }
+    
+    function updateTagInput() {
+      document.getElementById('newProjectTags').value = selectedTags.join(' ');
+    }
+    
+    function createNewProject() {
+      const name = document.getElementById('newProjectName').value.trim();
+      if (!name) {
+        alert('Please enter a project name');
+        return;
+      }
+      
+      // Generate codename
+      const codename = name.toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+      
+      const status = document.getElementById('newProjectStatus').value;
+      const tags = selectedTags.join(' ');
+      
+      // For Phase 1, just show what would be created
+      const newProject = {
+        name,
+        codename,
+        status,
+        type: 'infra', // Default
+        revenue: tags.includes('#revenue') ? 'YES' : 'NO',
+        priority: 3, // Default
+        tags,
+        lastUpdated: new Date().toISOString().split('T')[0],
+        nextAction: 'Add project details'
+      };
+      
+      alert(`Project would be created:\n\nName: ${name}\nCodename: ${codename}\nStatus: ${status}\nTags: ${tags}\n\nFor Phase 1, please add to PROJECTS_SPREADSHEET.md manually.`);
+      
+      hideNewProjectForm();
+    }
+    
+    function showToast(message) {
+      // Simple toast notification
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #333;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        z-index: 1001;
+        max-width: 400px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+    
+    // Add filter functionality
+    document.getElementById('search').addEventListener('input', filterProjects);
+    document.getElementById('statusFilter').addEventListener('change', filterProjects);
+    document.getElementById('tagFilter').addEventListener('change', filterProjects);
+    document.getElementById('priorityFilter').addEventListener('change', filterProjects);
+    
+    function filterProjects() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+      const tag = document.getElementById('tagFilter').value;
+      const priority = document.getElementById('priorityFilter').value;
+      
+      const filtered = allProjects.filter(p => {
+        if (search && !p.name.toLowerCase().includes(search) && 
+            !p.codename.toLowerCase().includes(search) &&
+            !p.tags.toLowerCase().includes(search) &&
+            !p.type.toLowerCase().includes(search)) {
+          return false;
+        }
+        if (status && p.status !== status) return false;
+        if (tag && !p.tags.includes(tag)) return false;
+        if (priority && p.priority !== parseInt(priority)) return false;
+        return true;
+      });
+      
+      renderProjects(filtered);
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('newProjectModal').addEventListener('click', function(e) {
+      if (e.target === this) hideNewProjectForm();
+    });
+    
+    // Load projects on page load
+    window.addEventListener('DOMContentLoaded', loadProjects);
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ctrl+F or Cmd+F to focus search
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('search').focus();
+      }
+      // Escape to close modal
+      if (e.key === 'Escape' && document.getElementById('newProjectModal').style.display === 'block') {
+        hideNewProjectForm();
+      }
+      // R to refresh
+      if (e.key === 'r' && !e.ctrlKey && !e.metaKey) {
+        refresh();
+      }
+    });
+  </script>
+</body>
+</html>

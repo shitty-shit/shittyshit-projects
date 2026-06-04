@@ -1,0 +1,66 @@
+version: 0.1
+created: 2026-05-10
+source_root: "C:\\Users\\idfk\\Desktop\\SHITTY_SYSTEM HARNESS\\00_SHITTYSHIT_MASTER\\.PROJECTS_SHITTYSHIT"
+notes:
+  - "Initial index is based on observed top-level folder names only."
+  - "Project names, status, and type are not yet confirmed."
+projects:
+  - observed_folder_name: ".BIGSHOTNYC"
+    status: unknown
+  - observed_folder_name: ".codex"
+    status: unknown
+  - observed_folder_name: ".shitbird"
+    status: unknown
+  - observed_folder_name: "_ACTIVE"
+    status: system-folder
+    active_projects:
+      - project_name: "Project Compiler Web Interface"
+        codename: "PROJECT_COMPILER_WEB"
+        type: "infra | ai | product"
+        revenue: false
+        priority: 2
+        spun_up: "2026-05-22"
+        status: "active"
+        tags: ["#infra", "#ai", "#product", "#audio", "#video"]
+  - observed_folder_name: "_MUDROOM"
+    status: system-folder
+  - observed_folder_name: "_PARKED"
+    status: system-folder
+  - observed_folder_name: "ACROLANG_SHITTYSPEAK"
+    status: unknown
+  - observed_folder_name: "app build sheet"
+    status: unknown
+  - observed_folder_name: "gpu"
+    status: unknown
+  - observed_folder_name: "KARPATHY"
+    status: unknown
+  - observed_folder_name: "KISS DASHBOARD"
+    status: unknown
+  - observed_folder_name: "llama"
+    status: unknown
+  - observed_folder_name: "MCP"
+    status: unknown
+  - observed_folder_name: "pro2"
+    status: unknown
+  - observed_folder_name: "project_dreamgraph"
+    status: unknown
+  - observed_folder_name: "PYTHON"
+    status: unknown
+  - observed_folder_name: "SHITTY_BOOKS"
+    status: unknown
+  - observed_folder_name: "SHITTYSHIT_CLAUDE_PROJECTS"
+    status: unknown
+  - observed_folder_name: "SHITTYSHIT_PROJECT_MUDROOM"
+    status: unknown
+  - observed_folder_name: "Songs"
+    status: unknown
+  - observed_folder_name: "STEMS MASTER"
+    status: unknown
+  - observed_folder_name: "Three amigos progrmmingnyc"
+    status: unknown
+  - observed_folder_name: "TOKENS=MONEY"
+    status: unknown
+  - observed_folder_name: "tools_skills"
+    status: unknown
+  - observed_folder_name: "TRUMP"
+    status: unknown
